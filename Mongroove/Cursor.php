@@ -30,20 +30,20 @@ class Mongroove_Cursor implements Iterator, ArrayAccess
 
     /**
      * Current query object
-     * @var Mongroove_Query
+     * @var Mongroove_Collection
      */
-    protected $query;
+    protected $collection;
 
     /**
      * Class constructor.
      *
-     * @param Mongroove_Query $query
+     * @param Mongroove_Collection $collection
      * @param MongoCursor $cursor
      */
-    public function __construct($query, $cursor)
+    public function __construct($collection, $cursor)
     {
         $this->cursor = $cursor;
-        $this->query = $query;
+        $this->collection = $collection;
     }
 
     /**
@@ -71,8 +71,7 @@ class Mongroove_Cursor implements Iterator, ArrayAccess
      */
     public function current()
     {
-        return $this->getQuery()
-            ->getCollection()
+        return $this->getCollection()
             ->getDocument()
             ->fromArray($this->cursor->current());
     }
@@ -115,18 +114,30 @@ class Mongroove_Cursor implements Iterator, ArrayAccess
     /**
      * Retrieve current collection
      *
-     * @return Mongroove_Query
+     * @return Mongroove_Collection
      */
-    protected function getQuery()
+    protected function getCollection()
     {
-        return $this->query;
+        return $this->collection;
     }
 
+    /**
+     * Whether a offset exists
+     *
+     * @param mixed $offset An offset to check for.
+     * @return boolean true on success or false on failure.
+     */
     public function offsetExists($offset)
     {
         return $this->valid();
     }
 
+    /**
+     * Offset to retrieve
+     *
+     * @param mixed $offset The offset to retrieve.
+     * @return mixed Can return all value types.
+     */
     public function offsetGet($offset)
     {
         if(is_numeric($offset))
@@ -153,11 +164,24 @@ class Mongroove_Cursor implements Iterator, ArrayAccess
         }
     }
 
+    /**
+     * Offset to set
+     *
+     * @param mixed $offset The offset to assign the value to.
+     * @param mixed $value The value to set.
+     * @throws Mongroove_Collection_Cursor
+     */
     public function offsetSet($offset, $value)
     {
         throw new Mongroove_Collection_Cursor('Cannot set cursor value');
     }
 
+    /**
+     * Offset to unset
+     *
+     * @param mixed $offset The offset to unset.
+     * @throws Mongroove_Collection_Cursor
+     */
     public function offsetUnset($offset)
     {
         throw new Mongroove_Collection_Cursor('Cannot unset cursor value');
