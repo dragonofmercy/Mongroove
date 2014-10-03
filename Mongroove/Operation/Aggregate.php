@@ -20,23 +20,23 @@
  * @license     http://www.opensource.org/licenses/BSD-3-Clause New BSD license
  * @since       1.0
  */
-class Mongroove_Operation_Aggregate extends Mongroove_Operation_Abstract
+class Mongroove_Operation_Aggregate extends Mongroove_Operation
 {
     /**
      * An array of pipeline operators, or just the first operator.
      * @var array
      */
-    protected $operator = array();
+    protected $pipeline = array();
 
     /**
      * Add operator
      *
-     * @param array $operator
+     * @param array $pipeline
      * @return Mongroove_Operation_Aggregate
      */
-    public function operator(array $operator)
+    public function operator(array $pipeline)
     {
-        $this->operator = $operator;
+        $this->pipeline = $pipeline;
         return $this;
     }
 
@@ -47,6 +47,6 @@ class Mongroove_Operation_Aggregate extends Mongroove_Operation_Abstract
      */
     public function aggregate()
     {
-        return $this->getCollection()->raw()->aggregate($this->operator);
+        return $this->getCollection()->raw()->aggregate($this->pipeline);
     }
 }

@@ -20,7 +20,7 @@
  * @license     http://www.opensource.org/licenses/BSD-3-Clause New BSD license
  * @since       1.0
  */
-class Mongroove_Operation_Query extends Mongroove_Operation_Abstract
+class Mongroove_Operation_Query extends Mongroove_Operation
 {
     /**
      * Query vars
