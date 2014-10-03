@@ -20,14 +20,8 @@
  * @license     http://www.opensource.org/licenses/BSD-3-Clause New BSD license
  * @since       1.0
  */
-class Mongroove_Query
+class Mongroove_Operation_Query extends Mongroove_Operation_Abstract
 {
-    /**
-     * Collection where executing the query
-     * @var Mongroove_Collection
-     */
-    protected $collection;
-
     /**
      * Query vars
      * @var array
@@ -41,24 +35,46 @@ class Mongroove_Query
     protected $fields = array();
 
     /**
-     * Class constructor.
+     * Add fields config to query
      *
-     * @param Mongroove_Collection $collection
+     * @param array $fields
+     * @return Mongroove_Operation_Query
      */
-    public function __construct($collection)
+    public function fields(array $fields)
     {
-        $this->collection = $collection;
+        $this->fields = $fields;
+        return $this;
     }
 
     /**
-     * Execute query
+     * Add query parameter
      *
-     * @return Mongroove_Cursor
+     * @param array $query
+     * @return Mongroove_Operation_Query
      */
-    public function execute()
+    public function query(array $query)
     {
-        $this->getCollection()->setQuery($this);
-        return $this->find();
+        $this->query = $query;
+        return $this;
+    }
+
+    /**
+     * Querys this collection, returning a single element
+     *
+     * @return Mongroove_Document|boolean
+     */
+    public function findOne()
+    {
+        $data = $this->getCollection()->raw()->findOne($this->query, $this->fields);
+
+        if(!empty($data))
+        {
+            return $this->getCollection()->getDocument()->fromArray($data);
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /**
@@ -66,33 +82,8 @@ class Mongroove_Query
      *
      * @return Mongroove_Cursor
      */
-    protected function find()
+    public function find()
     {
-        return new Mongroove_Cursor($this, $this->getCollection()->raw()->find($this->query, $this->fields));
-    }
-
-    /**
-     * Retrieve collection
-     *
-     * @return Mongroove_Collection
-     */
-    public function getCollection()
-    {
-        return $this->collection;
-    }
-
-    /**
-     * Short method to create a new query
-     *
-     * @param string $collection
-     * @param Mongroove_Connection|null $connection
-     * @return Mongroove_Query
-     * @throws Mongroove_Manager_Exception
-     */
-    public static function create($collection, $connection = null)
-    {
-        $manager = Mongroove_Manager::getInstance();
-        $connection = is_null($connection) ? $manager->getCurrentConnection() : $manager->getConnection($connection);
-        return new self($connection->getDatabase()->getCollection($collection));
+        return new Mongroove_Cursor($this->getCollection(), $this->getCollection()->raw()->find($this->query, $this->fields));
     }
 }
