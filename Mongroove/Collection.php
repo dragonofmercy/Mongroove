@@ -22,9 +22,6 @@
  */
 class Mongroove_Collection
 {
-    const SORTING_ASC = '1';
-    const SORTING_DESC = '-1';
-
     /**
      * DB Object
      * @var Mongroove_Database
@@ -42,12 +39,6 @@ class Mongroove_Collection
      * @var MongoCollection
      */
     protected $raw;
-
-    /**
-     * Last query
-     * @var Mongroove_Query
-     */
-    protected $last_query;
 
     /**
      * Class constructor.
@@ -95,31 +86,16 @@ class Mongroove_Collection
     /**
      * Create a new query
      *
-     * @return Mongroove_Query
+     * @return Mongroove_Operation_Query
      */
     public function createQuery()
     {
-        return new Mongroove_Query($this);
+        return new Mongroove_Operation_Query($this);
     }
 
-    /**
-     * Retrieves last query
-     *
-     * @return Mongroove_Query
-     */
-    public function getLastQuery()
+    public function createAggregation()
     {
-        return $this->last_query;
-    }
-
-    /**
-     * Set current query
-     *
-     * @param Mongroove_Query $query
-     */
-    public function setQuery($query)
-    {
-        $this->last_query = $query;
+        return new Mongroove_Operation_Aggregate($this);
     }
 
     /**
