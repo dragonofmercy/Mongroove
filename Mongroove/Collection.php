@@ -44,13 +44,13 @@ class Mongroove_Collection
      * Class constructor.
      *
      * @param Mongroove_Database $db
-     * @param string $classname Document classname
+     * @param string $collection Collection name
      */
-    public function __construct($db, $classname)
+    public function __construct($db, $collection)
     {
         $this->db = $db;
-        $document_name = $this->createDocument($classname);
-        $this->raw = new MongoCollection($db->getDatabaseHandler(), $document_name);
+        $this->createDocument($collection);
+        $this->raw = new MongoCollection($db->getDatabaseHandler(), $collection);
     }
 
     /**
@@ -84,47 +84,276 @@ class Mongroove_Collection
     }
 
     /**
-     * Create a new query
+     * Retrieve collection name
      *
-     * @return Mongroove_Operation_Query
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->raw()->getName();
+    }
+
+    /**
+     * Create a new query builder
+     *
+     * @return Mongroove_Query_Builder
      */
     public function createQuery()
     {
-        return new Mongroove_Operation_Query($this);
+        return new Mongroove_Query_Builder($this);
     }
 
-    public function createAggregation()
+    /**
+     * Wrapper method for MongoCollection::find().
+     *
+     * This method will dispatch preFind and postFind events.
+     *
+     * @see http://php.net/manual/en/mongocollection.find.php
+     * @param array $query
+     * @param array $fields
+     * @return MongoCursor
+     */
+    public function find(array $query = array(), array $fields = array())
     {
-        return new Mongroove_Operation_Aggregate($this);
+        return $this->raw()->find($query, $fields);
+    }
+
+    public function findAndUpdate()
+    {
+        return array();
+    }
+
+    public function findAndRemove()
+    {
+        return array();
+    }
+
+    public function insert()
+    {
+        return array();
+    }
+
+    public function update()
+    {
+        return array();
+    }
+
+    public function remove()
+    {
+        return array();
+    }
+
+    public function near()
+    {
+
+    }
+
+    public function mapReduce()
+    {
+
+    }
+
+    /**
+     * Invokes the distinct command.
+     *
+     * @see http://php.net/manual/en/mongocollection.distinct.php
+     * @see http://docs.mongodb.org/manual/reference/command/distinct/
+     * @param string $field
+     * @param array $query
+     * @param array $options
+     * @return array
+     * @throws Mongroove_Result_Exception if the command fails
+     */
+    public function distinct($field, array $query = array(), array $options = array())
+    {
+        $options = isset($options['timeout']) ? $this->convertSocketTimeout($options) : $options;
+
+        $command = array();
+        $command['distinct'] = $this->getName();
+        $command['key'] = $field;
+        $command['query'] = (object) $query;
+        $command = array_merge($command, $options);
+
+        $result = $this->getDatabase()->getDatabaseHandler()->command($command);
+
+        if(empty($result['ok']))
+        {
+            throw new Mongroove_Result_Exception($result);
+        }
+        else
+        {
+            return isset($result['result']) ? $result['result'] : array();
+        }
+    }
+
+    /**
+     * Execute the aggregate command.
+     *
+     * @see http://php.net/manual/en/mongocollection.aggregate.php
+     * @see http://docs.mongodb.org/manual/reference/command/aggregate/
+     * @param array $pipeline Array of pipeline operators, or the first operator
+     * @param array $op,...   Additional operators (if $pipeline was the first)
+     * @return array
+     * @throws Mongroove_Result_Exception if the command fails
+     */
+    public function aggregate(array $pipeline /* , array $op, ... */)
+    {
+        if(!array_key_exists(0, $pipeline))
+        {
+            $pipeline = func_get_args();
+        }
+
+        $command = array();
+        $command['aggregate'] = $this->getName();
+        $command['pipeline'] = $pipeline;
+
+        $result = $this->getDatabase()->getDatabaseHandler()->command($command);
+
+        if(empty($result['ok']))
+        {
+            throw new Mongroove_Result_Exception($result);
+        }
+        else
+        {
+            return isset($result['result']) ? $result['result'] : array();
+        }
+    }
+
+    /**
+     * Drops the collection.
+     *
+     * @return array
+     */
+    public function drop()
+    {
+        $this->raw()->drop();
+    }
+
+    /**
+     * Invokes the count command.
+     *
+     * @see http://php.net/manual/en/mongocollection.count.php
+     * @see http://docs.mongodb.org/manual/reference/command/count/
+     * @param array $query
+     * @param integer $limit
+     * @param integer $skip
+     * @return integer
+     */
+    public function count(array $query = array(), $limit = 0, $skip = 0)
+    {
+        return $this->raw()->count($query, $limit, $skip);
+    }
+
+    /**
+     * Execute the group command
+     *
+     * @param array|string|MongoCode $keys
+     * @param array $initial
+     * @param string|MongoCode $reduce
+     * @param array $options
+     * @return ArrayIterator
+     * @throws Mongroove_Result_Exception if the command fails
+     */
+    public function group($keys, array $initial, $reduce, array $options = array())
+    {
+        $options = isset($options['timeout']) ? $this->convertSocketTimeout($options) : $options;
+
+        $command = array();
+        $command['ns'] = $this->getName();
+        $command['initial'] = (object) $initial;
+        $command['$reduce'] = $reduce;
+
+        if(is_string($keys) || $keys instanceof MongoCode)
+        {
+            $command['$keyf'] = $keys;
+        }
+        else
+        {
+            $command['key'] = $keys;
+        }
+
+        $command = array_merge($command, $options);
+
+        foreach(array('$keyf', '$reduce', 'finalize') as $key)
+        {
+            if(isset($command[$key]) && is_string($command[$key]))
+            {
+                $command[$key] = new MongoCode($command[$key]);
+            }
+        }
+
+        if(isset($command['cond']) && is_array($command['cond']))
+        {
+            $command['cond'] = (object) $command['cond'];
+        }
+
+        $result = $this->getDatabase()->getDatabaseHandler()->command(array('group' => $command));
+
+        if(empty($result['ok']))
+        {
+            throw new Mongroove_Result_Exception($result);
+        }
+        else
+        {
+            return $result['retval'];
+        }
     }
 
     /**
      * Checks if document exists
      *
-     * @param string $classname
      * @return string
      * @throws Mongroove_Document_Exception
      */
-    protected function createDocument($classname)
+    protected function createDocument()
     {
-        if(!class_exists($classname, false))
+        $class = $this->getDatabase()->getConnection()->getManager()->getAttribute(Mongroove_Core::ATTR_CLASS_DOCUMENT);
+        $this->document = new $class($this, $this->getDatabase()->getConnection());
+    }
+
+    /**
+     * Convert "wtimeout" write option to "wTimeoutMS" for driver version
+     * 1.5.0+.
+     *
+     * @param array $options
+     * @return array
+     */
+    protected function convertWriteTimeout(array $options)
+    {
+        if(version_compare(phpversion('mongo'), '1.5.0', '<'))
         {
-            if($this->getDatabase()->getConnection()->getManager()->getAttribute(Mongroove_Core::ATTR_FORCE_MODEL_USAGE))
-            {
-                throw new Mongroove_Collection_Exception('The document "' . $classname . '" is not declared in document repository');
-            }
-            else
-            {
-                $class = $this->getDatabase()->getConnection()->getManager()->getAttribute(Mongroove_Core::ATTR_CLASS_DOCUMENT);
-                $this->document = new $class($this, $this->getDatabase()->getConnection());
-                $this->document->updateDocumentName($classname);
-            }
-        }
-        else
-        {
-            $this->document = new $classname($this, $this->getDatabase()->getConnection());
+            return $options;
         }
 
-        return $this->document->getDocumentName();
+        if(isset($options['wtimeout']) && ! isset($options['wTimeoutMS']))
+        {
+            $options['wTimeoutMS'] = $options['wtimeout'];
+            unset($options['wtimeout']);
+        }
+
+        return $options;
+    }
+
+    /**
+     * Convert "timeout" write option to "socketTimeoutMS" for driver version
+     * 1.5.0+.
+     *
+     * @param array $options
+     * @return array
+     */
+    protected function convertSocketTimeout(array $options)
+    {
+        if(version_compare(phpversion('mongo'), '1.5.0', '<'))
+        {
+            return $options;
+        }
+
+        if(isset($options['timeout']) && ! isset($options['socketTimeoutMS']))
+        {
+            $options['socketTimeoutMS'] = $options['timeout'];
+            unset($options['timeout']);
+        }
+
+        return $options;
     }
 }

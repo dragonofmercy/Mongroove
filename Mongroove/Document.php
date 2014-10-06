@@ -23,22 +23,10 @@
 class Mongroove_Document implements ArrayAccess
 {
     /**
-     * Document real name
-     * @var string|null
-     */
-    private $document_name;
-
-    /**
      * Parent collection
      * @var Mongroove_Collection
      */
-    private $collection;
-
-    /**
-     * Array of references
-     * @var array
-     */
-    private $references = array();
+    protected $collection;
 
     /**
      * @var array
@@ -50,6 +38,7 @@ class Mongroove_Document implements ArrayAccess
      *
      * @param Mongroove_Collection|null $collection
      * @param Mongroove_Connection|null $connection
+     * @throws InvalidArgumentException
      */
     public function __construct($collection = null, $connection = null)
     {
@@ -59,42 +48,8 @@ class Mongroove_Document implements ArrayAccess
         }
         else
         {
-            $classname = get_class($this);
-            $this->collection = Mongroove::getCollection($classname, $connection);
+            throw new InvalidArgumentException('Cannot create a document without collection');
         }
-
-        $r = new ReflectionObject($this);
-        foreach($r->getProperties(ReflectionProperty::IS_PROTECTED) as $column)
-        {
-            $this->fields[$column->getName()] = null;
-        }
-
-        $this->setup();
-    }
-
-    /**
-     * Get document name
-     *
-     * @return string
-     */
-    public function getDocumentName()
-    {
-        if(is_null($this->document_name))
-        {
-            $this->updateDocumentName(get_class($this));
-        }
-
-        return $this->document_name;
-    }
-
-    /**
-     * Update document name
-     *
-     * @param string $name
-     */
-    public function updateDocumentName($name)
-    {
-        $this->document_name = $name;
     }
 
     /**
@@ -107,11 +62,6 @@ class Mongroove_Document implements ArrayAccess
     {
         foreach($arr as $field => $value)
         {
-            if($field == '_id')
-            {
-                $field = 'id';
-            }
-
             $this->offsetSet($field, $value);
         }
 
@@ -125,21 +75,7 @@ class Mongroove_Document implements ArrayAccess
      */
     public function toArray()
     {
-        $output = array();
-
-        foreach($this->getFields() as $field => $value)
-        {
-            $value = $this->parseObjectValue($value, $field);
-
-            if(is_array($value))
-            {
-                $value = $this->toArrayDeep($value);
-            }
-
-            $output[$field] = $value;
-        }
-
-        return $output;
+        return $this->getFields();
     }
 
     /**
@@ -162,18 +98,13 @@ class Mongroove_Document implements ArrayAccess
      * Offset to retrieve
      *
      * @param mixed $offset The offset to retrieve.
-     * @param boolean $array true if array output
      * @return mixed Can return all value types.
      */
-    public function offsetGet($offset, $array = false)
+    public function offsetGet($offset)
     {
         if($this->offsetExists($offset))
         {
-            return $this->searchReferences($this->fields[$offset], $array);
-        }
-        elseif(Mongroove_Manager::getInstance()->getAttribute(Mongroove_Core::ATTR_FORCE_MODEL_USAGE))
-        {
-            throw new Mongroove_Document_Exception("The field \"$offset\" was not found");
+            return $offset;
         }
 
         return null;
@@ -187,17 +118,7 @@ class Mongroove_Document implements ArrayAccess
      */
     public function offsetSet($offset, $value)
     {
-        if(!Mongroove_Manager::getInstance()->getAttribute(Mongroove_Core::ATTR_FORCE_MODEL_USAGE))
-        {
-            $this->fields[$offset] = $value;
-        }
-        else
-        {
-            if($this->offsetExists($offset))
-            {
-                $this->fields[$offset] = $value;
-            }
-        }
+        $this->fields[$offset] = $value;
     }
 
     /**
@@ -224,36 +145,6 @@ class Mongroove_Document implements ArrayAccess
     }
 
     /**
-     * Retrieve all fields
-     */
-    public function getFields()
-    {
-        return $this->fields;
-    }
-
-    /**
-     * Checks if reference is defined
-     *
-     * @param string $name
-     * @return boolean|string
-     */
-    public function hasReference($name)
-    {
-        foreach($this->references as $field => $config)
-        {
-            if(array_key_exists('doc', $config))
-            {
-                if($config['doc'] == $name)
-                {
-                    return $field;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Field getter
      *
      * @param string $offset
@@ -275,159 +166,13 @@ class Mongroove_Document implements ArrayAccess
         $this->offsetSet($offset, $value);
     }
 
-    /**
-     * Find array deep and load references
-     *
-     * @param array $value
-     * @return array
-     * @throws Mongroove_Document_Exception
-     */
-    protected function toArrayDeep($value)
-    {
-        $output = array();
-
-        foreach($value as $key => $val)
-        {
-            $val = $this->parseObjectValue($val);
-
-            if(is_array($val))
-            {
-                $val = $this->toArrayDeep($val);
-            }
-
-            $output[$key] = $val;
-        }
-
-        return $output;
-    }
 
     /**
-     * Find reference document
-     *
-     * @param array $reference
-     * @return Mongroove_Document
-     * @throws Mongroove_Document_Exception
+     * Retrieve all fields
      */
-    protected function loadReference(array $reference)
+    protected function getFields()
     {
-        $ref = $this->retrieveObjectOfReference($reference['$ref']);
-
-        if($ref)
-        {
-            /** @var Mongroove_Document $ref_object */
-            $ref_object = new $ref($this->getCollection(), $this->getCollection()->getDatabase()->getConnection());
-            $ref_object->fromArray(MongoDBRef::get($this->getCollection()->getDatabase()->getDatabaseHandler(), $reference));
-
-            return $ref_object;
-        }
-        else
-        {
-            return $reference;
-        }
-    }
-
-    /**
-     * Add reference
-     *
-     * @param string $ref
-     * @param string $document_class
-     * @throws Mongroove_Document_Exception
-     */
-    protected function addReference($ref, $document_class)
-    {
-        if($this->offsetExists($ref))
-        {
-            $this->references[$ref] = $document_class;
-        }
-        else
-        {
-            throw new Mongroove_Document_Exception("Cannot set reference \"$ref\", the field is not declared in document");
-        }
-    }
-
-    /**
-     * Match reference to document declaration
-     *
-     * @param string $ref
-     * @return string
-     * @throws Mongroove_Document_Exception
-     */
-    protected function retrieveObjectOfReference($ref)
-    {
-        $field = $this->hasReference($ref);
-
-        if($field)
-        {
-            if(array_key_exists('class', $this->references[$field]))
-            {
-                return $this->references[$field]['class'];
-            }
-            else
-            {
-                return Mongroove_Inflector::camelize($this->references[$field]['doc']);
-            }
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    /**
-     * Parse object value
-     *
-     * @param mixed $value
-     * @return mixed
-     */
-    protected function parseObjectValue($value)
-    {
-        if($value instanceof MongoId)
-        {
-            return (string) $value;
-        }
-
-        return $value;
-    }
-
-    /**
-     * Search object references and load it if necessary
-     *
-     * @param mixed $value
-     * @param boolean $array
-     * @return Mongroove_Document
-     */
-    protected function searchReferences($value, $array = false)
-    {
-        if(is_array($value) && !$array)
-        {
-            if(array_key_exists('$ref', $value) && array_key_exists('$id', $value))
-            {
-                return $this->loadReference($value);
-            }
-            else
-            {
-                if(count($value))
-                {
-                    $keys = array_keys($value);
-                    if(is_numeric($keys[0]))
-                    {
-                        $refs = array();
-
-                        foreach($value as $val)
-                        {
-                            if(is_array($val) && array_key_exists('$ref', $val) && array_key_exists('$id', $val))
-                            {
-                                $refs[] = $this->loadReference($val);
-                            }
-                        }
-
-                        $value = $refs;
-                    }
-                }
-            }
-        }
-
-        return $value;
+        return $this->fields;
     }
 
     /**

@@ -83,4 +83,36 @@ class Mongroove_Database
     {
         return $this->dbh;
     }
+
+    /**
+     * Wrapper method for MongoDB::getReadPreference().
+     *
+     * For driver versions between 1.3.0 and 1.3.3, the return value will be
+     * converted for consistency with {@link Mongroove_Database::setReadPreference()}.
+     *
+     * @see http://php.net/manual/en/mongodb.getreadpreference.php
+     * @return array
+     */
+    public function getReadPreference()
+    {
+        return Mongroove_Utils_ReadPreference::convertReadPreference($this->getDatabaseHandler()->getReadPreference());
+    }
+
+    /**
+     * Wrapper method for MongoDB::setReadPreference().
+     *
+     * @see http://php.net/manual/en/mongodb.setreadpreference.php
+     * @param string $readPreference
+     * @param array  $tags
+     * @return boolean
+     */
+    public function setReadPreference($readPreference, array $tags = null)
+    {
+        if(isset($tags))
+        {
+            return $this->getDatabaseHandler()->setReadPreference($readPreference, $tags);
+        }
+
+        return $this->getDatabaseHandler()->setReadPreference($readPreference);
+    }
 }

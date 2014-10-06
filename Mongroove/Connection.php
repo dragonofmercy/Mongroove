@@ -190,44 +190,4 @@ class Mongroove_Connection
     {
         return $this->client;
     }
-
-    /**
-     * Sets documents directory
-     *
-     * @param string|array $directory
-     */
-    public function setDocumentsDirectory($directory)
-    {
-        if($directory !== null)
-        {
-            foreach((array) $directory as $dir)
-            {
-                $dir = rtrim($dir, '/');
-
-                if(!is_dir($dir))
-                {
-                    throw new Mongroove_Connection_Exception('You must pass a valid path to a directory containing documents');
-                }
-
-                $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir), RecursiveIteratorIterator::LEAVES_ONLY);
-
-                foreach($it as $file)
-                {
-                    $e = explode('.', $file->getFileName());
-
-                    if(end($e) === 'php')
-                    {
-                        $classname = str_replace($dir . DIRECTORY_SEPARATOR, null, $file->getPathName());
-                        $classname = str_replace(DIRECTORY_SEPARATOR, '_', $classname);
-                        $classname = substr($classname, 0, strpos($classname, '.'));
-
-                        if(!class_exists($classname, false))
-                        {
-                            include_once $file->getPathName();
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
