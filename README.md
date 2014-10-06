@@ -22,6 +22,6 @@ $manager->openConnection('host=localhost:27017;dbname=admin');
 
 __Retrieve a document__
 ```php
-$cursor = Mongroove::getCollection('users')->createQuery()->execute();
+$cursor = Mongroove::getCollection('users')->createQuery()->getQuery()->execute();
 print_r($cursor->toArray());
 ```
