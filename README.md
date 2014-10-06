@@ -1,19 +1,12 @@
 Mongroove
 ========
-
 Mongroove is an ODM (Object Document Mapper) for MongoDB.
 This ODM is compatible with PHP 5.2 and after and it respect PEAR class naming convention.
-
-Not developed yet :
- * Query options (fields, query, limit, etc...)
- * Create or update a document
- * Many other functionalities
 
 __Warning this is an alpha version, do not use in a production environment !__
 
 Simple usage:
 --------
-
 __Autoload and initialise the manager__
 ```php
 require_once 'includes/Mongroove.php';
