@@ -30,6 +30,12 @@ class Mongroove_Configurable
         Mongroove_Core::ATTR_MONGO_CLIENT_CONFIG => array(),
         Mongroove_Core::ATTR_CLASS_CONNECTION => 'Mongroove_Connection',
         Mongroove_Core::ATTR_CLASS_DOCUMENT => 'Mongroove_Document',
+        Mongroove_Core::ATTR_CLASS_DATABASE => 'Mongroove_Database',
+        Mongroove_Core::ATTR_CLASS_CURSOR => 'Mongroove_Cursor',
+        Mongroove_Core::ATTR_CLASS_QUERY => 'Mongroove_Query',
+        Mongroove_Core::ATTR_CLASS_COLLECTION => 'Mongroove_Collection',
+        Mongroove_Core::ATTR_CLASS_QUERY_BUILDER => 'Mongroove_Query_Builder',
+        Mongroove_Core::ATTR_CLASS_QUERY_EXPR => 'Mongroove_Query_Expr',
     );
 
     /**

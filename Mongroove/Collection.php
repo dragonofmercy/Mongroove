@@ -100,7 +100,8 @@ class Mongroove_Collection
      */
     public function createQuery()
     {
-        return new Mongroove_Query_Builder($this);
+        $classname = $this->getDatabase()->getConnection()->getManager()->getAttribute(Mongroove_Core::ATTR_CLASS_QUERY_BUILDER);
+        return new $classname($this);
     }
 
     /**
@@ -512,8 +513,8 @@ class Mongroove_Collection
      */
     protected function createDocument()
     {
-        $class = $this->getDatabase()->getConnection()->getManager()->getAttribute(Mongroove_Core::ATTR_CLASS_DOCUMENT);
-        $this->document = new $class($this, $this->getDatabase()->getConnection());
+        $classname = $this->getDatabase()->getConnection()->getManager()->getAttribute(Mongroove_Core::ATTR_CLASS_DOCUMENT);
+        $this->document = new $classname($this, $this->getDatabase()->getConnection());
     }
 
     /**

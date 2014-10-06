@@ -33,6 +33,12 @@ class Mongroove_Core
 
     const ATTR_CLASS_CONNECTION = '20';
     const ATTR_CLASS_DOCUMENT = '21';
+    const ATTR_CLASS_DATABASE = '22';
+    const ATTR_CLASS_CURSOR = '23';
+    const ATTR_CLASS_QUERY = '24';
+    const ATTR_CLASS_COLLECTION = '25';
+    const ATTR_CLASS_QUERY_BUILDER = '26';
+    const ATTR_CLASS_QUERY_EXPR = '27';
 
     /**
      * Class constructor

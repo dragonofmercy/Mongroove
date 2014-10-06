@@ -61,7 +61,8 @@ class Mongroove_Database
      */
     public function getCollection($name)
     {
-        return new Mongroove_Collection($this, $name);
+        $classname = $this->getConnection()->getManager()->getAttribute(Mongroove_Core::ATTR_CLASS_COLLECTION);
+        return new $classname($this, $name);
     }
 
     /**

@@ -311,7 +311,8 @@ class Mongroove_Query
             $cursor->snapshot();
         }
 
-        return new Mongroove_Cursor($this->getCollection(), $cursor);
+        $classname = $this->getCollection()->getDatabase()->getConnection()->getManager()->getAttribute(Mongroove_Core::ATTR_CLASS_CURSOR);
+        return new $classname($this->getCollection(), $cursor);
     }
 
     /**

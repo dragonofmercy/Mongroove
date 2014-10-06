@@ -52,8 +52,9 @@ class Mongroove_Query_Builder
      */
     public function __construct(Mongroove_Collection $collection)
     {
+        $classname = $collection->getDatabase()->getConnection()->getManager()->getAttribute(Mongroove_Core::ATTR_CLASS_QUERY_EXPR);
         $this->collection = $collection;
-        $this->expr = new Mongroove_Query_Expr();
+        $this->expr = new $classname();
     }
 
     /**
@@ -114,12 +115,12 @@ class Mongroove_Query_Builder
      *
      * @see http://docs.mongodb.org/manual/reference/operator/addToSet/
      * @see http://docs.mongodb.org/manual/reference/operator/each/
-     * @param mixed|Mongroove_Query_Expr $valueOrMongroove_Query_Expression
+     * @param mixed|Mongroove_Query_Expr $expression
      * @return Mongroove_Query_Builder
      */
-    public function addToSet($valueOrMongroove_Query_Expression)
+    public function addToSet($expression)
     {
-        $this->expr->addToSet($valueOrMongroove_Query_Expression);
+        $this->expr->addToSet($expression);
         return $this;
     }
 
@@ -987,12 +988,12 @@ class Mongroove_Query_Builder
      * current array field.
      *
      * @see http://docs.mongodb.org/manual/reference/operator/pull/
-     * @param mixed|Mongroove_Query_Expr $valueOrMongroove_Query_Expression
+     * @param mixed|Mongroove_Query_Expr $expression
      * @return Mongroove_Query_Builder
      */
-    public function pull($valueOrMongroove_Query_Expression)
+    public function pull($expression)
     {
-        $this->expr->pull($valueOrMongroove_Query_Expression);
+        $this->expr->pull($expression);
         return $this;
     }
 
@@ -1025,12 +1026,12 @@ class Mongroove_Query_Builder
      * @see http://docs.mongodb.org/manual/reference/operator/each/
      * @see http://docs.mongodb.org/manual/reference/operator/slice/
      * @see http://docs.mongodb.org/manual/reference/operator/sort/
-     * @param mixed|Mongroove_Query_Expr $valueOrMongroove_Query_Expression
+     * @param mixed|Mongroove_Query_Expr $expression
      * @return Mongroove_Query_Builder
      */
-    public function push($valueOrMongroove_Query_Expression)
+    public function push($expression)
     {
-        $this->expr->push($valueOrMongroove_Query_Expression);
+        $this->expr->push($expression);
         return $this;
     }
 

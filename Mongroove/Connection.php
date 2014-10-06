@@ -168,7 +168,8 @@ class Mongroove_Connection
      */
     public function getDatabase()
     {
-        return new Mongroove_Database($this, $this->config['dbname']);
+        $classname = $this->getManager()->getAttribute(Mongroove_Core::ATTR_CLASS_DATABASE);
+        return new $classname($this, $this->config['dbname']);
     }
 
     /**
