@@ -20,7 +20,7 @@
  * @license     http://www.opensource.org/licenses/BSD-3-Clause New BSD license
  * @since       1.0
  */
-class Mongroove_Collection_Cursor extends Mongroove_Exception
+class Mongroove_Collection_Cursor_Exception extends Mongroove_Exception
 {
 
 }

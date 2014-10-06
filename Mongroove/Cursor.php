@@ -169,21 +169,21 @@ class Mongroove_Cursor implements Iterator, ArrayAccess
      *
      * @param mixed $offset The offset to assign the value to.
      * @param mixed $value The value to set.
-     * @throws Mongroove_Collection_Cursor
+     * @throws Mongroove_Collection_Cursor_Exception
      */
     public function offsetSet($offset, $value)
     {
-        throw new Mongroove_Collection_Cursor('Cannot set cursor value');
+        throw new Mongroove_Collection_Cursor_Exception('Cannot set cursor value');
     }
 
     /**
      * Offset to unset
      *
      * @param mixed $offset The offset to unset.
-     * @throws Mongroove_Collection_Cursor
+     * @throws Mongroove_Collection_Cursor_Exception
      */
     public function offsetUnset($offset)
     {
-        throw new Mongroove_Collection_Cursor('Cannot unset cursor value');
+        throw new Mongroove_Collection_Cursor_Exception('Cannot unset cursor value');
     }
 }
