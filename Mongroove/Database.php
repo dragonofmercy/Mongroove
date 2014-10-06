@@ -85,6 +85,18 @@ class Mongroove_Database
     }
 
     /**
+     * Select db by name
+     *
+     * @param string $name
+     * @return Mongroove_Database
+     */
+    public function setDbName($name)
+    {
+        $this->dbh = $this->getConnection()->getClient()->selectDB($name);
+        return $this;
+    }
+
+    /**
      * Wrapper method for MongoDB::getReadPreference().
      *
      * For driver versions between 1.3.0 and 1.3.3, the return value will be
