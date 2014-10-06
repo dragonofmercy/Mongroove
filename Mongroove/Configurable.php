@@ -28,7 +28,6 @@ class Mongroove_Configurable
      */
     protected $attributes = array(
         Mongroove_Core::ATTR_MONGO_CLIENT_CONFIG => array(),
-        Mongroove_Core::ATTR_FORCE_MODEL_USAGE => false,
         Mongroove_Core::ATTR_CLASS_CONNECTION => 'Mongroove_Connection',
         Mongroove_Core::ATTR_CLASS_DOCUMENT => 'Mongroove_Document',
     );
