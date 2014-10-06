@@ -15,7 +15,7 @@
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the new BSD license.
  *
- * @package     Mangroove
+ * @package     Mongroove
  * @author      Jonathan H. Wage <jonwage@gmail.com>
  * @author      David Zeller <me@zellerda.com>
  * @license     http://www.opensource.org/licenses/BSD-3-Clause New BSD license

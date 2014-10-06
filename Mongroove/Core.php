@@ -19,7 +19,7 @@
 require_once 'Exception.php';
 
 /**
- * @package     Mangroove
+ * @package     Mongroove
  * @author      David Zeller <me@zellerda.com>
  * @license     http://www.opensource.org/licenses/BSD-3-Clause New BSD license
  * @since       1.0
