@@ -25,3 +25,13 @@ __Retrieve a document__
 $cursor = Mongroove::getCollection('users')->createQuery()->getQuery()->execute();
 print_r($cursor->toArray());
 ```
+
+Aggregation Framework:
+--------
+```php
+$cursor = Mongroove::getCollection('users')->aggregate(
+    array('$match' => array('id_str' => array('$lt' => 10))),
+    array('$group' => array('_id' => null, 'nb_posts' => array('$sum' => '$total_posts'), 'nb_document' => array('$sum' => 1)))
+);
+print_r($cursor->toArray());
+```
