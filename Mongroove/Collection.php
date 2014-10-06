@@ -118,43 +118,248 @@ class Mongroove_Collection
         return $this->raw()->find($query, $fields);
     }
 
-    public function findAndUpdate()
+    /**
+     * Execute the findAndModify command with the update option.
+     *
+     * This method will dispatch preFindAndUpdate and postFindAndUpdate events.
+     *
+     * @see http://docs.mongodb.org/manual/reference/command/findAndModify/
+     * @param array $query
+     * @param array $new_obj
+     * @param array $options
+     * @return array|null
+     * @throws Mongroove_Result_Exception if the command fails
+     */
+    public function findAndUpdate(array $query, array $new_obj, array $options = array())
     {
-        return array();
-    }
+        $options = isset($options['timeout']) ? $this->convertSocketTimeout($options) : $options;
 
-    public function findAndRemove()
-    {
-        return array();
-    }
+        $command = array();
+        $command['findandmodify'] = $this->getName();
+        $command['query'] = (object) $query;
+        $command['update'] = (object) $new_obj;
+        $command = array_merge($command, $options);
 
-    public function insert()
-    {
-        return array();
-    }
+        $result = $this->getDatabase()->getDatabaseHandler()->command($command);
 
-    public function update()
-    {
-        return array();
-    }
+        if(empty($result['ok']))
+        {
+            throw new Mongroove_Result_Exception($result);
+        }
 
-    public function remove()
-    {
-        return array();
-    }
-
-    public function near()
-    {
-
-    }
-
-    public function mapReduce()
-    {
-
+        return isset($result['value']) ? $result['value'] : null;
     }
 
     /**
-     * Invokes the distinct command.
+     * Execute the findAndModify command with the remove option.
+     *
+     * This method will dispatch preFindAndRemove and postFindAndRemove events.
+     *
+     * @see http://docs.mongodb.org/manual/reference/command/findAndModify/
+     * @param array $query
+     * @param array $options
+     * @return array|null
+     * @throws Mongroove_Result_Exception if the command fails
+     */
+    public function findAndRemove(array $query, array $options = array())
+    {
+        $options = isset($options['timeout']) ? $this->convertSocketTimeout($options) : $options;
+
+        $command = array();
+        $command['findandmodify'] = $this->getName();
+        $command['query'] = (object) $query;
+        $command['remove'] = true;
+        $command = array_merge($command, $options);
+
+        $result = $this->getDatabase()->getDatabaseHandler()->command($command);
+
+        if(empty($result['ok']))
+        {
+            throw new Mongroove_Result_Exception($result);
+        }
+
+        return isset($result['value']) ? $result['value'] : null;
+    }
+
+    /**
+     * Wrapper method for MongoCollection::findOne().
+     *
+     * This method will dispatch preFindOne and postFindOne events.
+     *
+     * @see http://php.net/manual/en/mongocollection.findone.php
+     * @param array $query
+     * @param array $fields
+     * @return array|null
+     */
+    public function findOne(array $query = array(), array $fields = array())
+    {
+        return $this->raw()->findOne($query, $fields);
+    }
+
+    /**
+     * Wrapper method for MongoCollection::insert().
+     *
+     * This method will dispatch preInsert and postInsert events.
+     *
+     * @see http://php.net/manual/en/mongocollection.insert.php
+     * @param array $a Document to insert
+     * @param array $options
+     * @return array|boolean
+     */
+    public function insert(array &$a, array $options = array())
+    {
+        $document = $a;
+        $options = isset($options['safe']) ? $this->convertWriteConcern($options) : $options;
+        $options = isset($options['wtimeout']) ? $this->convertWriteTimeout($options) : $options;
+        $options = isset($options['timeout']) ? $this->convertSocketTimeout($options) : $options;
+        $result = $this->raw()->insert($document, $options);
+
+        if(isset($document['_id']))
+        {
+            $a['_id'] = $document['_id'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Wrapper method for MongoCollection::update().
+     *
+     * This method will dispatch preUpdate and postUpdate events.
+     *
+     * @see http://php.net/manual/en/mongocollection.update.php
+     * @param array $query
+     * @param array $new_obj
+     * @param array $options
+     * @return array|boolean
+     */
+    public function update($query, array $new_obj, array $options = array())
+    {
+        if(is_scalar($query))
+        {
+            trigger_error('Scalar $query argument for update() is deprecated', E_USER_DEPRECATED);
+            $query = array('_id' => $query);
+        }
+
+        $options = isset($options['safe']) ? $this->convertWriteConcern($options) : $options;
+        $options = isset($options['wtimeout']) ? $this->convertWriteTimeout($options) : $options;
+        $options = isset($options['timeout']) ? $this->convertSocketTimeout($options) : $options;
+
+        /* Allow "multi" to be used instead of "multiple", as it's accepted in
+         * the MongoDB shell and other (non-PHP) drivers.
+         */
+        if(isset($options['multi']) && ! isset($options['multiple']))
+        {
+            $options['multiple'] = $options['multi'];
+            unset($options['multi']);
+        }
+
+        return $this->raw()->update($query, $new_obj, $options);
+    }
+
+    /**
+     * Wrapper method for MongoCollection::remove().
+     *
+     * This method will dispatch preRemove and postRemove events.
+     *
+     * @see http://php.net/manual/en/mongocollection.remove.php
+     * @param array $query
+     * @param array $options
+     * @return array|boolean
+     */
+    public function remove(array $query, array $options = array())
+    {
+        $options = isset($options['safe']) ? $this->convertWriteConcern($options) : $options;
+        $options = isset($options['wtimeout']) ? $this->convertWriteTimeout($options) : $options;
+        $options = isset($options['timeout']) ? $this->convertSocketTimeout($options) : $options;
+        return $this->raw()->remove($query, $options);
+    }
+
+    /**
+     * Execute the geoNear command.
+     *
+     * @param array $near
+     * @param array $query
+     * @param array $options
+     * @return array
+     * @throws Mongroove_Result_Exception if the command fails
+     */
+    public function near($near, array $query, array $options)
+    {
+        $options = isset($options['timeout']) ? $this->convertSocketTimeout($options) : $options;
+
+        $command = array();
+        $command['geoNear'] = $this->getName();
+        $command['near'] = $near;
+        $command['spherical'] = isset($near['type']);
+        $command['query'] = (object) $query;
+        $command = array_merge($command, $options);
+
+        $result = $this->getDatabase()->getDatabaseHandler()->command($command);
+
+        if(empty($result['ok']))
+        {
+            throw new Mongroove_Result_Exception($result);
+        }
+
+        return isset($result['results']) ? $result['results'] : array();
+    }
+
+    /**
+     * Execute the mapReduce command.
+     *
+     * @see http://docs.mongodb.org/manual/reference/command/geoNear/
+     * @param string|MongoCode $map
+     * @param string|MongoCode $reduce
+     * @param array|string $out
+     * @param array $query
+     * @param array $options
+     * @return array
+     * @throws Mongroove_Result_Exception if the command fails
+     */
+    public function mapReduce($map, $reduce, $out, array $query, array $options)
+    {
+        $options = isset($options['timeout']) ? $this->convertSocketTimeout($options) : $options;
+
+        $command = array();
+        $command['mapreduce'] = $this->getName();
+        $command['map'] = $map;
+        $command['reduce'] = $reduce;
+        $command['query'] = (object) $query;
+        $command['out'] = $out;
+        $command = array_merge($command, $options);
+
+        foreach(array('map', 'reduce', 'finalize') as $key)
+        {
+            if(isset($command[$key]) && is_string($command[$key]))
+            {
+                $command[$key] = new MongoCode($command[$key]);
+            }
+        }
+
+        $result = $this->getDatabase()->getDatabaseHandler()->command($command);
+
+        if(empty($result['ok']))
+        {
+            throw new Mongroove_Result_Exception($result);
+        }
+
+        if(isset($result['result']) && is_string($result['result']))
+        {
+            return $this->getDatabase()->getCollection($result['result'])->find();
+        }
+
+        if(isset($result['result']) && is_array($result['result']) &&
+            isset($result['result']['db'], $result['result']['collection']))
+        {
+            return $this->getDatabase()->setDbName($result['result']['db'])->getCollection($result['result']['collection'])->find();
+        }
+
+        return isset($result['results']) ? $result['results'] : array();
+    }
+
+    /**
+     * Execute the distinct command.
      *
      * @see http://php.net/manual/en/mongocollection.distinct.php
      * @see http://docs.mongodb.org/manual/reference/command/distinct/
@@ -230,7 +435,7 @@ class Mongroove_Collection
     }
 
     /**
-     * Invokes the count command.
+     * Execute the count command.
      *
      * @see http://php.net/manual/en/mongocollection.count.php
      * @see http://docs.mongodb.org/manual/reference/command/count/
@@ -309,6 +514,28 @@ class Mongroove_Collection
     {
         $class = $this->getDatabase()->getConnection()->getManager()->getAttribute(Mongroove_Core::ATTR_CLASS_DOCUMENT);
         $this->document = new $class($this, $this->getDatabase()->getConnection());
+    }
+
+    /**
+     * Converts "safe" write option to "w" for driver versions 1.3.0+.
+     *
+     * @param array $options
+     * @return array
+     */
+    protected function convertWriteConcern(array $options)
+    {
+        if(version_compare(phpversion('mongo'), '1.3.0', '<'))
+        {
+            return $options;
+        }
+
+        if(isset($options['safe']) && ! isset($options['w']))
+        {
+            $options['w'] = is_bool($options['safe']) ? (integer) $options['safe'] : $options['safe'];
+            unset($options['safe']);
+        }
+
+        return $options;
     }
 
     /**
