@@ -236,12 +236,6 @@ class Mongroove_Collection
      */
     public function update($query, array $new_obj, array $options = array())
     {
-        if(is_scalar($query))
-        {
-            trigger_error('Scalar $query argument for update() is deprecated', E_USER_DEPRECATED);
-            $query = array('_id' => $query);
-        }
-
         $options = isset($options['safe']) ? $this->convertWriteConcern($options) : $options;
         $options = isset($options['wtimeout']) ? $this->convertWriteTimeout($options) : $options;
         $options = isset($options['timeout']) ? $this->convertSocketTimeout($options) : $options;
