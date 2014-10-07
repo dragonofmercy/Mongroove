@@ -30,7 +30,6 @@ class Mongroove_Core
     const VERSION = '0.0.1';
 
     const ATTR_MONGO_CLIENT_CONFIG = '1';
-
     const ATTR_CLASS_CONNECTION = '20';
     const ATTR_CLASS_DOCUMENT = '21';
     const ATTR_CLASS_DATABASE = '22';

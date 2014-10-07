@@ -67,12 +67,13 @@ class Mongroove_Connection
         $this->prepare($dsn, $username, $password);
         $this->setName($name);
 
+        $dsn = $this->getConnectionString();
+        $options = $this->getManager()->getAttribute(Mongroove_Core::ATTR_MONGO_CLIENT_CONFIG);
+        $options['connect'] = true;
+        $options['db'] = array_key_exists('db', $options) ? $options['db'] : $this->config['dbname'];
+
         try
         {
-            $dsn = $this->getConnectionString();
-            $options = $this->getManager()->getAttribute(Mongroove_Core::ATTR_MONGO_CLIENT_CONFIG);
-            $options['connect'] = true;
-
             $this->client = @new MongoClient($dsn, $options);
         }
         catch(MongoConnectionException $e)
@@ -118,7 +119,7 @@ class Mongroove_Connection
      * @param string $dsn
      * @param string|null $username
      * @param string|null $password
-     * @throws Mongroove_Connection_Exception
+     * @throws InvalidArgumentException
      */
     protected function prepare($dsn, $username = null, $password = null)
     {
@@ -128,7 +129,7 @@ class Mongroove_Connection
         }
         else
         {
-            throw new Mongroove_Connection_Exception('Host not found in DSN');
+            throw new InvalidArgumentException('Host not found in DSN');
         }
 
         if(preg_match('/dbname\=([.\w]+)/', $dsn, $matches))
@@ -137,12 +138,12 @@ class Mongroove_Connection
         }
         else
         {
-            throw new Mongroove_Connection_Exception('DB name not found in DSN');
+            throw new InvalidArgumentException('DB name not found in DSN');
         }
 
         if($password && !$username)
         {
-            throw new Mongroove_Connection_Exception('You cannot set a password without username');
+            throw new InvalidArgumentException('You cannot set a password without username');
         }
         else
         {
