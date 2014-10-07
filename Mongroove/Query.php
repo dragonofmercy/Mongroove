@@ -168,6 +168,36 @@ class Mongroove_Query
     }
 
     /**
+     * Querys this collection, returning a single element
+     *
+     * @link http://www.php.net/manual/en/mongocollection.findone.php
+     * @return boolean|Mongroove_Document
+     */
+    public function findOne()
+    {
+        if($this->query['type'] != self::TYPE_FIND)
+        {
+            throw new LogicException('findOne cannot be used with this type of query');
+        }
+
+        $result = $this->getCollection()->findOne(
+            $this->query['query'],
+            isset($this->query['select']) ? $this->query['select'] : array()
+        );
+
+        if(is_null($result))
+        {
+            return false;
+        }
+        else
+        {
+            return $this->getCollection()
+                ->getDocument()
+                ->fromArray($result);
+        }
+    }
+
+    /**
      * Execute the query and return its result.
      *
      * The return value will vary based on the query type. Commands with results
